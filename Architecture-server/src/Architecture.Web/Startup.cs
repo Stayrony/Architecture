@@ -6,7 +6,32 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Architecture.Common.Invoke;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Swashbuckle.AspNetCore.Filters;
+using Serilog;
+using Microsoft.AspNetCore.Mvc;
+using Architecture.Web.OperationFilters;
+using Architecture.Web.DocumentFilters;
+using Swashbuckle.AspNetCore.Swagger;
+using Architecture.Model.Database.Options;
+using Architecture.Model.Invoke;
+using Architecture.Model.Database.EnumMappers;
+using Architecture.View.Response;
+using Architecture.View;
+using System.IO;
+using System.IdentityModel.Tokens.Jwt;
+using AutoMapper;
+using System.Text;
+using Architecture.Model.Shared;
+using Architecture.Model.Database.Shared;
+using Microsoft.EntityFrameworkCore;
+using Architecture.Model.Database;
+using Microsoft.Extensions.FileProviders;
+using System.Reflection;
+using NLog.Extensions.Logging;
+using NLog.Web;
+using Architecture.Web.Hubs;
 
 namespace Architecture.Web
 {
@@ -22,21 +47,217 @@ namespace Architecture.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+            //options
+            services.AddDataProtection();
+            services.Configure<JwtTokenOptions>(Configuration.GetSection("JwtToken"));
+            services.Configure<SendGridOptions>(Configuration.GetSection("SendGrid"));
+            services.Configure<FilesOptions>(Configuration.GetSection("Files"));
+            services.Configure<UrlsOptions>(Configuration.GetSection("Urls"));
+
+            services.AddTransient<EntityToModelProfile>();
+
+            var connectionString = Configuration.GetConnectionString("ArchitectureContext");
+
+            services.AddOptions();
             services.AddScoped(typeof(IInvokeHandler<>), typeof(BaseInvokeHandler<>));
             services.AddSingleton<IInvokeResultSettings, InvokeResultSettings>();
+            services.AddMvc();
+
+            services.AddTransient<IViewMapper, ResponseViewMapper>();
+            services.AddTransient<ITokenService, TokenService>();
+
+            services.AddApiVersioning(options =>
+            {
+                options.ReportApiVersions = true;
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+            });
+
+            //register logger
+            services.AddSingleton<Serilog.ILogger>(
+                                                   new LoggerConfiguration()
+                                                       .ReadFrom.Configuration(Configuration)
+                                                       .CreateLogger());
+            services.AddSwaggerExamples();
+
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", CreateSwaggerDocInfo());
+
+                options.OperationFilter<AddEnumOperationFilter>();
+                options.OperationFilter<AuthorizationHeaderOperationFilter>();
+
+                options.DocumentFilter<SetVersionInPaths>();
+
+                options.ExampleFilters();
+
+                options.OperationFilter<AddFileParamTypesOperationFilter>(); // Adds an Upload button to endpoints which have [AddSwaggerFileUploadButton]
+                options.OperationFilter<AddResponseHeadersFilter>(); // [SwaggerResponseHeader]
+                options.OperationFilter<AppendAuthorizeToSummaryOperationFilter>(); // Adds "(Auth)" to the summary so that you can see which endpoints have Authorization
+                                                                                    // or use the generic method, e.g. c.OperationFilter<AppendAuthorizeToSummaryOperationFilter<MyCustomAttribute>>();
+
+#if !TEST
+                var basePath = AppContext.BaseDirectory;
+                var xmlPath = Path.Combine(basePath, "Architecture.Web.xml");
+
+                options.IncludeXmlComments(xmlPath);
+#endif
+            });
+
+            services.AddEntityFrameworkNpgsql().AddDbContext<ArchitectureDbContext>(options => options.UseNpgsql(connectionString));
+            services.AddScoped(typeof(SeedDatabase));
+            services.AddScoped(typeof(TestSeedDatabase));
+
+            ServiceProvider serviceProvider = services.BuildServiceProvider();
+
+            Mapper.Reset();
+            services.AddAutoMapper(typeof(Startup).Assembly);
+
+            var entityToModelProfile = serviceProvider.GetRequiredService<EntityToModelProfile>();
+            services.AddSingleton(new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile(new ModelToViewMapperProfile());
+                cfg.AddProfile(entityToModelProfile);
+            }).CreateMapper());
+
+            ITokenService tokenService = serviceProvider.GetRequiredService<ITokenService>();
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear(); // remove default claims
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(cfg =>
+                {
+                    cfg.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = tokenService.TokenInfo.ValidateIssuer,
+                        ValidateLifetime = tokenService.TokenInfo.ValidateLifetime,
+                        ValidateIssuerSigningKey = tokenService.TokenInfo.ValidateIssuerSigningKey,
+                        ValidateAudience = tokenService.TokenInfo.ValidateAudience,
+
+                        ValidIssuer = tokenService.TokenInfo.Issuer,
+                        ValidAudience = tokenService.TokenInfo.Audience,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(tokenService.TokenInfo.IssuerSecurityKey))
+                    };
+
+                    // We have to hook the OnMessageReceived event in order to
+                    // allow the JWT authentication handler to read the access
+                    // token from the query string when a WebSocket or 
+                    // Server-Sent Events request comes in.
+                    cfg.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var accessToken = context.Request.Query["access_token"];
+
+                            // If the request is for our hub...
+                            var path = context.HttpContext.Request.Path;
+                            if (!string.IsNullOrEmpty(accessToken) &&
+                                (path.StartsWithSegments("/ChatHub")))
+                            {
+                                // Read the token out of the query string
+                                context.Token = accessToken;
+                            }
+                            return Task.CompletedTask;
+                        }
+                    };
+
+
+                });
+
+            services.AddSignalR();
             services.AddMvc();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app,
+                              IHostingEnvironment env,
+                              ILoggerFactory loggerFactory,
+                              TestSeedDatabase testSeedDatabese,
+                              SeedDatabase seedDatabase)
         {
+            env.ConfigureNLog("nlog.config");
+            loggerFactory.AddNLog();
+
+            app.UseSignalR(routes =>
+            {
+                routes.MapHub<ChatHub>("/ChatHub");
+            });
+
+            //AUTOCUT-S
+            seedDatabase.Seed();
+            if (env.IsDevelopment()
+                || env.IsEnvironment("Dev"))
+            {
+                testSeedDatabese.Seed();
+            }
+
+            app.UseStaticFiles();
+
             if (env.IsDevelopment())
+            {
+                app.UseStaticFiles(new StaticFileOptions()
+                {
+                    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "uploads")),
+                    RequestPath = new PathString("/uploads")
+                });
+            }
+            else
+            {
+                app.UseStaticFiles(new StaticFileOptions()
+                {
+                    FileProvider = new PhysicalFileProvider(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "uploads")),
+                    RequestPath = new PathString("/uploads")
+                });
+            }
+
+            //AUTOCUT-F
+
+            //TODO add only friendly origins
+            app.UseCors(options =>
+            {
+                options.AllowAnyMethod();
+                options.AllowAnyHeader();
+                options.AllowAnyOrigin();
+            });
+
+            if (env.IsDevelopment()
+             || env.IsEnvironment("Dev"))
             {
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseMvc();
-        }               
-    }
+            app.UseSwagger();
 
+            app.UseSwaggerUI(c =>
+            {
+                c.InjectStylesheet("/swagger-ui/custom.css");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
+            });
+
+            app.UseAuthentication();
+            app.UseMvcWithDefaultRoute();
+
+            app.UseMvc();
+        }
+
+        static Info CreateSwaggerDocInfo()
+        {
+            var info = new Info()
+            {
+                Title = $"Architecture API Developer Documentation",
+                Version = "v1",
+                Description = $"The REST APIs provide programmatic access to read and write Architecture data.\n" +
+                                 $"<a href='' target='_blank'>Error Codes Glossary</a> ",
+                Contact = new Contact() { Name = "Stayrony Inc.", Email = "ana.mizumskaya@gmail.com" },
+            };
+
+            return info;
+        }
+    }
 }

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Architecture.Common.Invoke
+namespace Architecture.Model.Invoke
 {
     public class InvokeResult<T>
     {
@@ -34,7 +34,7 @@ namespace Architecture.Common.Invoke
             new InvokeResult<T>
             {
                 IsSuccess    = false,
-                Code         = ResultCode.ValidationError,
+                Code         = resultCode,
                 Result       = default(T),
                 ErrorMessage = errorMessage
             };

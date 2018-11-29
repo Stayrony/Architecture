@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Architecture.Common.Invoke
+namespace Architecture.Model.Invoke
 {
     public class BaseInvokeHandler<K> : IInvokeHandler<K>
     {

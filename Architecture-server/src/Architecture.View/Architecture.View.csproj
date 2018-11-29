@@ -4,4 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Architecture.Model\Architecture.Model.csproj" />
+  </ItemGroup>
 </Project>

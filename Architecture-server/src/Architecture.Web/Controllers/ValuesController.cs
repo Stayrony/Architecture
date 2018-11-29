@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Architecture.Common.Invoke;
+using Architecture.Model.Invoke;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Architecture.Web.Controllers
