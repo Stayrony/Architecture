@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace Architecture.Common.Invoke
+namespace Architecture.Model.Invoke
 {
     public class InvokeFunctionLogSetttings
     {

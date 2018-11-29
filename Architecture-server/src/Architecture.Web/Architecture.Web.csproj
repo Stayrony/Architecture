@@ -2,14 +2,33 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DocumentationFile>bin\Debug\netcoreapp2.0\Architecture.Web.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DocumentationFile>bin\Release\netcoreapp2.0\Architecture.Web.xml</DocumentationFile>
+  </PropertyGroup>
   <ItemGroup>
     <Folder Include="wwwroot\" />
+    <Folder Include="OperationFilters\" />
+    <Folder Include="DocumentFilters\" />
+    <Folder Include="Hubs\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.9" />
     <PackageReference Include="NLog.Extensions" Version="1.0.1" />
     <PackageReference Include="NLog.Targets.ElasticSearch" Version="5.0.0" />
     <PackageReference Include="NLog.Web.AspNetCore" Version="4.6.0" />
+    <PackageReference Include="AutoMapper" Version="8.0.0" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="6.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="4.5.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="4.0.1" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="3.0.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="4.0.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="4.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="2.3.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.0.4" />
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.4" />
@@ -17,6 +36,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Architecture.Common\Architecture.Common.csproj" />
     <ProjectReference Include="..\Architecture.Model\Architecture.Model.csproj" />
+    <ProjectReference Include="..\Architecture.Model.Database\Architecture.Model.Database.csproj" />
+    <ProjectReference Include="..\Architecture.View\Architecture.View.csproj" />
+    <ProjectReference Include="..\Architecture.View.Response\Architecture.View.Response.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Update="nlog.config">

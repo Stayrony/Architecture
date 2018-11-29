@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Architecture.Common.Invoke
+namespace Architecture.Model.Invoke
 {
     public interface IInvokeResultSettings : ICloneable
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Architecture.Common.Invoke
+namespace Architecture.Model.Invoke
 {
     public interface IInvokeHandler<K>
     {
