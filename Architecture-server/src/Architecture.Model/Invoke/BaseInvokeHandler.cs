@@ -174,8 +174,7 @@ namespace Architecture.Model.Invoke
 
         protected virtual void LogException(Exception ex)
         {
-            _logger.LogCritical("Exception occured type: {Type} message: {Message} stackTrace: {StackTrace}",
-                ex.GetType(), ex.Message, ex.StackTrace);
+            _logger.LogCritical($"Exception occured type: {ex.GetType()} message: {ex.Message} stackTrace: {ex.StackTrace}");
         }
 
         protected virtual void LogInvoke<T>(InvokeResult<T> result, InvokeFunctionLogSetttings operationLogSettings)
