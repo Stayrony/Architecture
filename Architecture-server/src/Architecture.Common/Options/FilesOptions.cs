@@ -1,5 +1,5 @@
 ﻿using System;
-namespace Architecture.Model.Database.Options
+namespace Architecture.Common.Options
 {
     public class FilesOptions
     {

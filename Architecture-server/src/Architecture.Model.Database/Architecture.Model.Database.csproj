@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <Folder Include="Extensions\" />
-    <Folder Include="Options\" />
     <Folder Include="EnumMappers\" />
     <Folder Include="Shared\" />
   </ItemGroup>
@@ -24,5 +23,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Architecture.Model\Architecture.Model.csproj" />
+    <ProjectReference Include="..\Architecture.Common\Architecture.Common.csproj" />
   </ItemGroup>
 </Project>

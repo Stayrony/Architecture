@@ -5,11 +5,11 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Architecture.Model.API.Token;
-using Architecture.Model.Database.Options;
 using Architecture.Model.Shared;
 using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
+using Architecture.Common.Options;
 
 namespace Architecture.Model.Database.Shared
 {
