@@ -4,5 +4,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Helpers\" />
+    <Folder Include="Services\" />
+    <Folder Include="Services\Email\" />
+    <Folder Include="Options\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentEmail.SendGrid" Version="2.5.0" />
+    <PackageReference Include="FluentEmail.Razor" Version="2.5.0" />
   </ItemGroup>
 </Project>

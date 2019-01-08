@@ -18,6 +18,7 @@ using NLog.Extensions.Logging;
 using NLog.Web;
 using Architecture.Web.Hubs;
 using Architecture.Web.Extensions;
+using Architecture.Common.Options;
 
 namespace Architecture.Web
 {

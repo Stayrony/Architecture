@@ -10,10 +10,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="wwwroot\" />
-    <Folder Include="OperationFilters\" />
     <Folder Include="DocumentFilters\" />
     <Folder Include="Hubs\" />
     <Folder Include="Extensions\" />
+    <Folder Include="OperationFilters\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.9" />
