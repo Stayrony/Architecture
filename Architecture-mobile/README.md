@@ -11,7 +11,7 @@ The Architecture mobile app solution organizes the source code and other resourc
 |Architecture.UITests   |This project contains UI tests for the Architecture project.   |
 |Architecture.NUnitTests|This project contains unit tests for the Architecture project.|
 
-The classes from the SampleApp mobile app can be re-used in any Xamarin.Forms app with little or no modification.
+The classes from the Architecture mobile app can be re-used in any Xamarin.Forms app with little or no modification.
 
 # Architecture project
 The Architecture project contains the following folders:
@@ -34,7 +34,73 @@ The Architecture project contains the following folders:
 |ViewModels   |Contains the application logic that's exposed to pages.   |
 |Views   |Contains the pages for the app.   |
 
+# Xamarin solution structure
+
+ ```
+ .
+├── Architecture.sln
+├── artifacts
+├── docs
+│   ├── MobileProjectStructure.md
+│   ├── NUnitTests.md
+│   └── UITests.md
+├── lib
+├── packages
+├── src
+│   ├── Architecture
+│   │   ├── App.xaml
+│   │   ├── App.xaml.cs
+│   │   ├── Cells
+│   │   ├── Constants.cs
+│   │   ├── Controls
+│   │   ├── Exceptions
+│   │   ├── Architecture.csproj
+│   │   ├── Enums
+│   │   ├── EventArguments
+│   │   ├── Extensions
+│   │   ├── Helpers
+│   │   ├── Hubs
+│   │   ├── Managers
+│   │   ├── Models
+│   │   ├── Resources
+│   │   ├── Services
+│   │   ├── ViewModels
+│   │   └── Views
+│   ├── Architecture.Android
+│   │   ├── AndroidInitializer.cs
+│   │   ├── Assets
+│   │   ├── Architecture.Android.csproj
+│   │   ├── Keys
+│   │   ├── MainActivity.cs
+│   │   ├── MainApplication.cs
+│   │   ├── Properties
+│   │   ├── Renderers
+│   │   ├── Resources
+│   │   └── Services
+│   └── Architecture.iOS
+│       ├── AppDelegate.cs
+│       ├── Assets.xcassets
+│       ├── Entitlements.plist
+│       ├── Architecture.iOS.csproj
+│       ├── Info.plist
+│       ├── Main.cs
+│       ├── Properties
+│       ├── Renderers
+│       ├── Resources
+│       ├── Services
+│       └── iOSInitializer.cs
+├── stylecop
+│   └── StyleCopRuleSet.ruleset
+└── tests
+    └── Architecture.UITests
+        ├── AppInitializer.cs
+        ├── Architecture.UITests.csproj
+        ├── Tests.cs
+        └── packages.config
+ ```
+  
 # Platform projects
+
 The platform projects contain effect implementations, custom renderer implementations, and other platform-specific resources.
 
 # Dependency injection
